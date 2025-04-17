@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Review with Quiz</title>
+    
+     <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            margin-top: 50px;
+        }
+        #pdf-section {
+            margin-bottom: 30px;
+        }
+        #quiz-section {
+            display: none;
+            margin-top: 40px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            text-align: left;
+        }
+        .question {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            padding: 12px 24px;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #3367d6;
+        }
+        #quiz-result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 4px;
+            display: none;
+        }
+        .passed {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .failed {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        #download-btn {
+            display: none;
+            margin: 20px auto;
+            background: #34a853;
+        }
+        #return-btn {
+            background: #ea4335;
+        }
+        .instructions {
+            margin: 20px 0;
+            padding: 15px;
+            background: #e8f0fe;
+            border-radius: 5px;
+        }
+    </style>
+    
+</head>
+<body>
+    <div class="container">
+        <h1>Document Review System</h1>
+        
+        <div id="pdf-section">
+            <div class="instructions">
+                <h2>Step 1: Review the Document</h2>
+                <p>Please click the button below to open and review the PDF document.</p>
+            </div>
+            <!-- Change this button to use your PDF's path -->
+            <button id="open-pdf">Open PDF Document</button>
+        </div>
+        
+        <div id="quiz-section" style="display:none;">
+             <div class="container">
+        <h1>Document Review System</h1>
+        
+        <div id="pdf-section">
+            <div class="instructions">
+                <h2>Step 1: Review the Document</h2>
+                <p>Please click the button below to open and review the PDF document in your browser.</p>
+                <p>After reviewing, return to this page to complete the quiz.</p>
+            </div>
+            <button id="open-pdf">Open PDF Document</button>
+        </div>
+        
+        <div id="quiz-section">
+            <div class="instructions">
+                <h2>Step 2: Complete the Quiz</h2>
+                <p>Please answer all questions about the document you just reviewed.</p>
+            </div>
+            <form id="quiz-form"></form>
+            <button id="submit-quiz">Submit Quiz</button>
+            <button id="return-btn">Return to Document</button>
+            
+            <div id="quiz-result"></div>
+            <button id="download-btn">Download Results as PDF</button>
+    
+        </div>
+    </div>
+
+    <script>
+        // Set this to your PDF's path in the repository
+        const PDF_PATH = 'Benefit Change.pdf'; // or 'docs/document.pdf' if in a subfolder
+        
+        document.getElementById('open-pdf').addEventListener('click', function() {
+            // Open PDF from repository in new tab
+            const pdfUrl = `https://${window.location.hostname}/${PDF_PATH}`;
+            window.open(pdfUrl, '_blank');
+            
+            // Show quiz section after PDF is opened
+            document.getElementById('pdf-section').style.display = 'none';
+            document.getElementById('quiz-section').style.display = 'block';
+        });
+
+        // (Keep all your existing JavaScript code)
+      // Quiz questions - replace with your actual questions
+        const quizQuestions = [
+            {
+                question: "What is the primary objective of this document?",
+                options: ["To provide guidelines", "To share research findings", "To announce an event", "To sell a product"],
+                answer: 0
+            },
+            {
+                question: "Which section contains the summary of key points?",
+                options: ["Introduction", "Methodology", "Executive Summary", "Appendix"],
+                answer: 2
+            },
+            // Add 8 more questions...
+        ];
+        
+        // Track if user has viewed the PDF
+        let pdfViewed = false;
+        
+        // Initialize the quiz form
+        function initQuiz() {
+            const quizForm = document.getElementById('quiz-form');
+            quizForm.innerHTML = ''; // Clear any existing questions
+            
+            quizQuestions.forEach((q, i) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'question';
+                
+                const questionText = document.createElement('p');
+                questionText.textContent = `${i+1}. ${q.question}`;
+                questionDiv.appendChild(questionText);
+                
+                q.options.forEach((option, j) => {
+                    const input = document.createElement('input');
+                    input.type = 'radio';
+                    input.name = `question-${i}`;
+                    input.value = j;
+                    input.id = `q${i}-opt${j}`;
+                    input.required = true;
+                    
+                    const label = document.createElement('label');
+                    label.htmlFor = `q${i}-opt${j}`;
+                    label.textContent = option;
+                    
+                    questionDiv.appendChild(input);
+                    questionDiv.appendChild(label);
+                    questionDiv.appendChild(document.createElement('br'));
+                });
+                
+                quizForm.appendChild(questionDiv);
+            });
+        }
+        
+        // Calculate quiz score
+        function calculateScore() {
+            let score = 0;
+            const userAnswers = [];
+            
+            quizQuestions.forEach((q, i) => {
+                const selectedOption = document.querySelector(`input[name="question-${i}"]:checked`);
+                if (selectedOption) {
+                    const answerIndex = parseInt(selectedOption.value);
+                    userAnswers.push({
+                        question: q.question,
+                        userAnswer: q.options[answerIndex],
+                        correctAnswer: q.options[q.answer],
+                        isCorrect: answerIndex === q.answer
+                    });
+                    
+                    if (answerIndex === q.answer) {
+                        score++;
+                    }
+                }
+            });
+            
+            return { score, userAnswers };
+        }
+        
+        // Generate results PDF
+        function generateResultsPDF(score, userAnswers) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Add title
+            doc.setFontSize(18);
+            doc.text('Document Review Quiz Results', 105, 20, { align: 'center' });
+            
+            // Add user info
+            doc.setFontSize(12);
+            doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 30);
+            
+            // Add score
+            doc.setFontSize(14);
+            const passed = score >= 7;
+            doc.text(`Score: ${score}/10 (${score * 10}%)`, 105, 45, { align: 'center' });
+            doc.setTextColor(passed ? '#34a853' : '#ea4335');
+            doc.text(`Result: ${passed ? 'PASSED' : 'FAILED'}`, 105, 55, { align: 'center' });
+            doc.setTextColor('#000000');
+            
+            // Add answers
+            doc.setFontSize(12);
+            let yPosition = 70;
+            
+            userAnswers.forEach((answer, i) => {
+                if (yPosition > 270) {
+                    doc.addPage();
+                    yPosition = 20;
+                }
+                
+                doc.text(`${i+1}. ${answer.question}`, 20, yPosition);
+                yPosition += 8;
+                
+                doc.setTextColor(answer.isCorrect ? '#34a853' : '#ea4335');
+                doc.text(`✓ Your answer: ${answer.userAnswer}`, 25, yPosition);
+                yPosition += 8;
+                
+                if (!answer.isCorrect) {
+                    doc.setTextColor('#34a853');
+                    doc.text(`✓ Correct answer: ${answer.correctAnswer}`, 25, yPosition);
+                    yPosition += 8;
+                }
+                
+                doc.setTextColor('#000000');
+                yPosition += 10;
+            });
+            
+            // Save the PDF
+            doc.save('document_review_results.pdf');
+        }
+        
+        // Event listeners
+        document.getElementById('open-pdf').addEventListener('click', function() {
+            // Open PDF in new tab (replace with your PDF filename)
+            window.open('sample.pdf', '_blank');
+            pdfViewed = true;
+            
+            // Show quiz section after a short delay (to simulate user returning)
+            setTimeout(() => {
+                document.getElementById('pdf-section').style.display = 'none';
+                document.getElementById('quiz-section').style.display = 'block';
+                initQuiz();
+            }, 1000);
+        });
+        
+        document.getElementById('return-btn').addEventListener('click', function() {
+            // Return to PDF view
+            document.getElementById('quiz-section').style.display = 'none';
+            document.getElementById('pdf-section').style.display = 'block';
+            window.open('sample.pdf', '_blank');
+        });
+        
+        document.getElementById('submit-quiz').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Check if all questions are answered
+            const unanswered = quizQuestions.some((_, i) => {
+                return !document.querySelector(`input[name="question-${i}"]:checked`);
+            });
+            
+            if (unanswered) {
+                alert('Please answer all questions before submitting.');
+                return;
+            }
+            
+            const { score, userAnswers } = calculateScore();
+            const passingScore = 7; // 70% required to pass
+            
+            const resultDiv = document.getElementById('quiz-result');
+            resultDiv.style.display = 'block';
+            
+            if (score >= passingScore) {
+                resultDiv.className = 'passed';
+                resultDiv.innerHTML = `
+                    <h3>Congratulations!</h3>
+                    <p>You scored ${score}/10 (${score * 10}%). You passed!</p>
+                `;
+            } else {
+                resultDiv.className = 'failed';
+                resultDiv.innerHTML = `
+                    <h3>Quiz Results</h3>
+                    <p>You scored ${score}/10 (${score * 10}%). You need at least 7 correct answers to pass.</p>
+                    <p>You may return to the document to review and try again.</p>
+                `;
+            }
+            
+            document.getElementById('download-btn').style.display = 'block';
+            
+            // Store results for PDF generation
+            this.dataset.score = score;
+            this.dataset.userAnswers = JSON.stringify(userAnswers);
+            
+            // Scroll to results
+            resultDiv.scrollIntoView({ behavior: 'smooth' });
+        });
+        
+        document.getElementById('download-btn').addEventListener('click', function() {
+            const score = document.getElementById('submit-quiz').dataset.score;
+            const userAnswers = JSON.parse(document.getElementById('submit-quiz').dataset.userAnswers);
+            generateResultsPDF(score, userAnswers);
+        });
+        
+        // Check if returning from PDF view (simple approach)
+        window.onload = function() {
+            if (window.location.hash === '#quiz') {
+                document.getElementById('pdf-section').style.display = 'none';
+                document.getElementById('quiz-section').style.display = 'block';
+                initQuiz();
+            }
+        };
+   
+    </script>
+</body>
+</html>
