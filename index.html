@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Review with Quiz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            margin-top: 50px;
+        }
+        #pdf-section, #quiz-section {
+            margin-bottom: 30px;
+        }
+        #quiz-section {
+            display: none;
+            margin-top: 40px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            text-align: left;
+        }
+        .question {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            padding: 12px 24px;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #3367d6;
+        }
+        #start-quiz {
+            display: none;
+            background: #34a853;
+            margin-top: 20px;
+        }
+        #quiz-result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 4px;
+            display: none;
+        }
+        .passed {
+            background: #d4edda;
+            color: #155724;
+        }
+        .failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .instructions {
+            margin: 20px 0;
+            padding: 15px;
+            background: #e8f0fe;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Document Review System</h1>
+        
+        <div id="pdf-section">
+            <div class="instructions">
+                <h2>Step 1: Review the Document</h2>
+                <p>Please click the button below to open and review the PDF document.</p>
+                <p>After reviewing, return to this page and click "Start Quiz".</p>
+            </div>
+            <button id="open-pdf">Open PDF Document</button>
+            <button id="start-quiz">Start Quiz</button>
+        </div>
+        
+        <div id="quiz-section">
+            <div class="instructions">
+                <h2>Step 2: Complete the Quiz</h2>
+                <p>Please answer all questions about the document you reviewed.</p>
+            </div>
+            <form id="quiz-form"></form>
+            <button id="submit-quiz">Submit Quiz</button>
+            <button id="retry-quiz">Review Document Again</button>
+            <div id="quiz-result"></div>
+        </div>
+    </div>
+
+    <script>
+        // Set this to your PDF's path in the repository
+        const PDF_PATH = 'Benefit Change.pdf'; // Update with your PDF filename
+        
+        // Quiz questions - replace with your actual questions
+        const quizQuestions = [
+            {
+                question: "What is the main purpose of this document?",
+                options: ["To inform", "To entertain", "To advertise", "To confuse"],
+                answer: 0
+            },
+            {
+                question: "Which section contains the key findings?",
+                options: ["Introduction", "Methods", "Results", "Conclusion"],
+                answer: 2
+            },
+            // Add 8 more questions...
+        ];
+        
+        // Initialize the quiz form
+        function initQuiz() {
+            const quizForm = document.getElementById('quiz-form');
+            quizForm.innerHTML = '';
+            
+            quizQuestions.forEach((q, i) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'question';
+                
+                const questionText = document.createElement('p');
+                questionText.textContent = `${i+1}. ${q.question}`;
+                questionDiv.appendChild(questionText);
+                
+                q.options.forEach((option, j) => {
+                    const input = document.createElement('input');
+                    input.type = 'radio';
+                    input.name = `question-${i}`;
+                    input.value = j;
+                    input.id = `q${i}-opt${j}`;
+                    input.required = true;
+                    
+                    const label = document.createElement('label');
+                    label.htmlFor = `q${i}-opt${j}`;
+                    label.textContent = option;
+                    
+                    questionDiv.appendChild(input);
+                    questionDiv.appendChild(label);
+                    questionDiv.appendChild(document.createElement('br'));
+                });
+                
+                quizForm.appendChild(questionDiv);
+            });
+        }
+        
+        // Calculate quiz score
+        function calculateScore() {
+            let score = 0;
+            quizQuestions.forEach((q, i) => {
+                const selectedOption = document.querySelector(`input[name="question-${i}"]:checked`);
+                if (selectedOption && parseInt(selectedOption.value) === q.answer) {
+                    score++;
+                }
+            });
+            return score;
+        }
+        
+        // Event listeners
+        document.getElementById('open-pdf').addEventListener('click', function() {
+            // Open PDF from repository
+            window.open(PDF_PATH, '_blank');
+            // Show quiz button
+            document.getElementById('start-quiz').style.display = 'inline-block';
+        });
+        
+        document.getElementById('start-quiz').addEventListener('click', function() {
+            // Hide PDF section, show quiz
+            document.getElementById('pdf-section').style.display = 'none';
+            document.getElementById('quiz-section').style.display = 'block';
+            initQuiz();
+        });
+        
+        document.getElementById('submit-quiz').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Check all questions answered
+            const allAnswered = quizQuestions.every((_, i) => {
+                return document.querySelector(`input[name="question-${i}"]:checked`);
+            });
+            
+            if (!allAnswered) {
+                alert('Please answer all questions before submitting.');
+                return;
+            }
+            
+            const score = calculateScore();
+            const passingScore = 7; // 70% to pass
+            
+            const resultDiv = document.getElementById('quiz-result');
+            resultDiv.style.display = 'block';
+            
+            if (score >= passingScore) {
+                resultDiv.className = 'passed';
+                resultDiv.innerHTML = `
+                    <h3>Congratulations!</h3>
+                    <p>You scored ${score}/10 (${score * 10}%). You passed!</p>
+                `;
+            } else {
+                resultDiv.className = 'failed';
+                resultDiv.innerHTML = `
+                    <h3>Quiz Results</h3>
+                    <p>You scored ${score}/10 (${score * 10}%). You need at least 7 correct answers to pass.</p>
+                `;
+            }
+        });
+        
+        document.getElementById('retry-quiz').addEventListener('click', function() {
+            // Return to PDF section
+            document.getElementById('quiz-section').style.display = 'none';
+            document.getElementById('pdf-section').style.display = 'block';
+            document.getElementById('quiz-result').style.display = 'none';
+            // Reopen the PDF
+            window.open(PDF_PATH, '_blank');
+        });
+    </script>
+</body>
+</html>
