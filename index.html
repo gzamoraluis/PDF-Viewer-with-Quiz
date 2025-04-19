@@ -213,6 +213,95 @@
                 `;
             }
         });
+        // Save the PDF
+            const fileName = `Quiz_Report_${results.date.replace(/\//g, '-')}.pdf`;
+            doc.save(fileName);
+        }
+        
+        // Display the quiz results
+        function displayResults(results) {
+            const reportInfo = document.getElementById('report-info');
+            const reportQuestions = document.getElementById('report-questions');
+            
+            // Display summary
+            reportInfo.innerHTML = `
+                <p><strong>Date:</strong> ${results.date}</p>
+                <p><strong>Time:</strong> ${results.time}</p>
+                <p class="${results.passed ? 'passed' : 'failed'}">
+                    <strong>Score:</strong> ${results.score}/${results.maxScore} (${results.percentage}%) - 
+                    ${results.passed ? 'PASSED' : 'FAILED'}
+                </p>
+            `;
+            
+            // Display all questions and answers
+            reportQuestions.innerHTML = '<h3>Question Details</h3>';
+            results.answers.forEach((answer, i) => {
+                const answerDiv = document.createElement('div');
+                answerDiv.className = 'question';
+                answerDiv.innerHTML = `
+                    <p><strong>Question ${i + 1}:</strong> ${answer.question}</p>
+                    <p style="color: ${answer.isCorrect ? '#2e7d32' : '#c62828'}">
+                        <strong>Your answer:</strong> ${answer.userAnswer}
+                    </p>
+                    ${!answer.isCorrect ? `
+                        <p style="color: #2e7d32">
+                            <strong>Correct answer:</strong> ${answer.correctAnswer}
+                        </p>
+                    ` : ''}
+                `;
+                reportQuestions.appendChild(answerDiv);
+            });
+            
+            // Show report section
+            document.getElementById('quiz-section').style.display = 'none';
+            document.getElementById('report-section').style.display = 'block';
+        }
+        
+        // Event listeners
+        document.getElementById('open-pdf').addEventListener('click', function() {
+            // Open PDF from repository
+            window.open(PDF_PATH, '_blank');
+            // Show quiz button
+            document.getElementById('take-quiz-btn').style.display = 'inline-block';
+        });
+        
+        document.getElementById('take-quiz-btn').addEventListener('click', function() {
+            // Hide PDF section, show quiz
+            document.getElementById('pdf-section').style.display = 'none';
+            document.getElementById('quiz-section').style.display = 'block';
+            initQuiz();
+        });
+        
+        document.getElementById('submit-quiz').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Check all questions answered
+            const allAnswered = quizQuestions.every((_, i) => {
+                return document.querySelector(`input[name="question-${i}"]:checked`);
+            });
+            
+            if (!allAnswered) {
+                alert('Please answer all questions before submitting.');
+                return;
+            }
+            
+            // Calculate and display results
+            const results = calculateResults();
+            displayResults(results);
+        });
+        
+        document.getElementById('retry-quiz').addEventListener('click', function() {
+            // Return to PDF section
+            document.getElementById('quiz-section').style.display = 'none';
+            document.getElementById('pdf-section').style.display = 'block';
+            document.getElementById('take-quiz-btn').style.display = 'inline-block';
+            window.open(PDF_PATH, '_blank');
+        });
+        
+        document.getElementById('download-report').addEventListener('click', function() {
+            const results = calculateResults();
+            generatePDFReport(results);
+        });
         
         document.getElementById('retry-quiz').addEventListener('click', function() {
             // Return to PDF section
